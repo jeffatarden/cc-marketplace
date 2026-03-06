@@ -17,7 +17,5 @@
     "run",
     "xcodebuild"
   ],
-  "commands": [
-    "./commands/run.md"
-  ]
+  "skills": "./skills/"
 }

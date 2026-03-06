@@ -10,8 +10,5 @@
   "repository": "https://github.com/setouchi-h/cc-marketplace",
   "license": "MIT",
   "keywords": ["claude", "statusline", "productivity", "shell"],
-  "commands": [
-    "./commands/install-statusline.md",
-    "./commands/preview-statusline.md"
-  ]
+  "skills": "./skills/"
 }

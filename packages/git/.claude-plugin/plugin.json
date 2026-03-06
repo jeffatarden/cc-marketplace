@@ -17,8 +17,5 @@
     "branch",
     "automation"
   ],
-  "commands": [
-    "./commands/commit.md",
-    "./commands/create-branch.md"
-  ]
+  "skills": "./skills/"
 }

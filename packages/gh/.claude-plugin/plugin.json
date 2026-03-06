@@ -16,7 +16,5 @@
     "git",
     "automation"
   ],
-  "commands": [
-    "./commands/create-pr.md"
-  ]
+  "skills": "./skills/"
 }
