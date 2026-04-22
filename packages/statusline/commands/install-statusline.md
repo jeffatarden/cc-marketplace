@@ -6,7 +6,7 @@ allowed-tools: [Bash(mkdir:*), Bash(tee:*), Bash(chmod:*), Bash(which:*), Bash(e
 
 # Install Statusline
 
-This command writes a shell script to `~/.claude/scripts/statusline.sh` that renders a rich status line for Claude Code sessions (branch, model, cost, duration, lines changed, and optionally a quote).
+This command writes a shell script to `~/.claude/scripts/statusline.sh` that renders a rich status line for Claude Code sessions (branch, model, cost, duration, lines changed, energy/water estimates, and optionally a quote).
 
 ## Behavior
 
@@ -40,7 +40,7 @@ tee ~/.claude/scripts/statusline.sh >/dev/null <<'EOF'
 #!/usr/bin/env bash
 
 # Status line script for Claude Code
-# Displays: Branch, Model, Cost, Duration, Lines changed, and an optional quote
+# Displays: Branch, Model, Cost, Duration, Lines changed, Energy/Water estimates, and an optional quote
 
 # Parse flags
 NO_QUOTES=0
@@ -80,6 +80,49 @@ lines_removed=$(echo "$input" | jq -r '.cost.total_lines_removed // 0' 2>/dev/nu
 model_name=$(echo "$input" | jq -r '.model.display_name // "Sonnet 4.5"' 2>/dev/null)
 model_id=$(echo "$input" | jq -r '.model.id // ""' 2>/dev/null)
 workspace_dir=$(echo "$input" | jq -r '.workspace.current_dir // .workspace.project_dir // ""' 2>/dev/null)
+
+# --- Energy & Water Estimates ---
+detect_model_tier() {
+  local id="$1"
+  local name="$2"
+  case "$id" in
+    *opus*|*Opus*|*OPUS*)       echo "opus"   ; return ;;
+    *sonnet*|*Sonnet*|*SONNET*) echo "sonnet" ; return ;;
+    *haiku*|*Haiku*|*HAIKU*)    echo "haiku"  ; return ;;
+  esac
+  case "$name" in
+    *opus*|*Opus*|*OPUS*)       echo "opus"   ;;
+    *sonnet*|*Sonnet*|*SONNET*) echo "sonnet" ;;
+    *haiku*|*Haiku*|*HAIKU*)    echo "haiku"  ;;
+    *)                          echo "sonnet" ;;
+  esac
+}
+
+model_tier=$(detect_model_tier "$model_id" "$model_name")
+
+case "$model_tier" in
+  opus)   power_watts=200; water_rate_gph="0.20" ;;
+  haiku)  power_watts=35;  water_rate_gph="0.05" ;;
+  *)      power_watts=100; water_rate_gph="0.10" ;;
+esac
+
+water_gal=$(jq -n --argjson rate "$water_rate_gph" --argjson ms "${duration_ms:-0}" \
+  '$rate * ($ms / 3600000)')
+
+format_water() {
+  local gal="$1"
+  jq -n --argjson g "$gal" '
+    if $g < 0.01 then
+      ($g * 3785.41 | round | tostring) + " mL"
+    elif $g < 1.0 then
+      (($g * 128 * 10 | round / 10) | tostring) + " fl oz"
+    else
+      (($g * 100 | round / 100) | tostring) + " gal"
+    end
+  ' -r
+}
+
+water_display=$(format_water "$water_gal")
 
 # Validate critical values were parsed successfully
 if [ -z "$cost" ] || [ "$cost" = "null" ]; then
@@ -199,23 +242,27 @@ apply_color_per_word() {
 if [ "$NO_QUOTES" -ne 1 ]; then
   colored_quote=$(apply_color_per_word "$quote")
   # Build and print status line with emojis, colors, and quote
-  printf "🌿 \033[1;92m%s\033[0m | 🤖 \033[1;96m%b\033[0m | 💰 \033[1;93m\$%.4f\033[0m | ⏱️ \033[1;97m%s\033[0m | 📝 \033[1;92m+%s\033[0m/\033[1;91m-%s\033[0m | 💬 %b" \
+  printf "🌿 \033[1;92m%s\033[0m | 🤖 \033[1;96m%b\033[0m | 💰 \033[1;93m\$%.4f\033[0m | ⏱️ \033[1;97m%s\033[0m | 📝 \033[1;92m+%s\033[0m/\033[1;91m-%s\033[0m | ⚡ \033[1;33m~%dW\033[0m | 💧 \033[1;34m~%s\033[0m | 💬 %b" \
     "$branch" \
     "$model_display" \
     "$cost" \
     "$duration_str" \
     "$lines_added" \
     "$lines_removed" \
+    "$power_watts" \
+    "$water_display" \
     "$colored_quote"
 else
   # Print without quote segment
-  printf "🌿 \033[1;92m%s\033[0m | 🤖 \033[1;96m%b\033[0m | 💰 \033[1;93m\$%.4f\033[0m | ⏱️ \033[1;97m%s\033[0m | 📝 \033[1;92m+%s\033[0m/\033[1;91m-%s\033[0m" \
+  printf "🌿 \033[1;92m%s\033[0m | 🤖 \033[1;96m%b\033[0m | 💰 \033[1;93m\$%.4f\033[0m | ⏱️ \033[1;97m%s\033[0m | 📝 \033[1;92m+%s\033[0m/\033[1;91m-%s\033[0m | ⚡ \033[1;33m~%dW\033[0m | 💧 \033[1;34m~%s\033[0m" \
     "$branch" \
     "$model_display" \
     "$cost" \
     "$duration_str" \
     "$lines_added" \
-    "$lines_removed"
+    "$lines_removed" \
+    "$power_watts" \
+    "$water_display"
 fi
 EOF
 chmod +x ~/.claude/scripts/statusline.sh
