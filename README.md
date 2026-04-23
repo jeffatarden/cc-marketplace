@@ -12,11 +12,11 @@ Claude Code marketplace bundle with essential development plugins.
 ## Installation
 
 ```bash
-/plugin marketplace add setouchi-h/cc-marketplace
-/plugin install statusline@cc-marketplace
-/plugin install gh@cc-marketplace
-/plugin install git@cc-marketplace
-/plugin install xcode@cc-marketplace
+/plugin marketplace add jeffatardan/cc-marketplace
+/plugin install statusline@jbuchbinder
+/plugin install gh@jbuchbinder
+/plugin install git@jbuchbinder
+/plugin install xcode@jbuchbinder
 ```
 
 ## Usage
@@ -42,7 +42,7 @@ The statusline plugin displays rich session information in your Claude Code prom
 **Installation:**
 ```bash
 # Step 1: Install the plugin
-/plugin install statusline@cc-marketplace
+/plugin install statusline@jbuchbinder
 
 # Step 2: Run the installer
 /statusline:install-statusline
