@@ -1,8 +1,8 @@
 {
-  "name": "cc-marketplace",
+  "name": "jbuchbinder",
   "owner": {
-    "name": "Kazuki Hashimoto",
-    "email": "setouchi.develop@gmail.com"
+    "name": "Jeffrey Buchbinder",
+    "email": "jeff@jbuchbinder.com"
   },
   "metadata": {
     "description": "A marketplace bundle for PR creation and management tools.",
